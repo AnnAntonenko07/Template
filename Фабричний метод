@@ -1,112 +1,129 @@
 using System;
 
-namespace RefactoringGuru.DesignPatterns.FactoryMethod.Conceptual
+public abstract class AbstractPhone
 {
-    // The Creator class declares the factory method that is supposed to return
-    // an object of a Product class. The Creator's subclasses usually provide
-    // the implementation of this method.
-    abstract class Creator
+    public abstract void PlayMusic(string songName);
+    public abstract void StopMusic();
+}
+
+public class Samson : AbstractPhone
+{
+    public override void PlayMusic(string songName)
     {
-        // Note that the Creator may also provide some default implementation of
-        // the factory method.
-        public abstract IProduct FactoryMethod();
+        Console.WriteLine("Playing song " + songName + " from Samson phone");
+    }
 
-        // Also note that, despite its name, the Creator's primary
-        // responsibility is not creating products. Usually, it contains some
-        // core business logic that relies on Product objects, returned by the
-        // factory method. Subclasses can indirectly change that business logic
-        // by overriding the factory method and returning a different type of
-        // product from it.
-        public string SomeOperation()
+    public override void StopMusic()
+    {
+        Console.WriteLine("Song stopped from Samson");
+    }
+}
+
+public class Nokla : AbstractPhone
+{
+    public override void PlayMusic(string songName)
+    {
+        Console.WriteLine("Playing song " + songName + " from Nokla phone");
+    }
+
+    public override void StopMusic()
+    {
+        Console.WriteLine("Song stopped from Nokla phone");
+    }
+}
+
+public abstract class AbstractPhoneFactory
+{
+    public abstract AbstractPhone CreateObject();
+}
+
+public class CreateFactoryModelSamson : AbstractPhoneFactory
+{
+    public override AbstractPhone CreateObject()
+    {
+        return new Samson();
+    }
+}
+
+public class CreateFactoryModelNokla : AbstractPhoneFactory
+{
+    public override AbstractPhone CreateObject()
+    {
+        return new Nokla();
+    }
+}
+
+public class Client
+{
+    public AbstractPhoneFactory ClientMethod(string modelNumber)
+    {
+        switch (modelNumber.ToLower())
         {
-            // Call the factory method to create a Product object.
-            var product = FactoryMethod();
-            // Now, use the product.
-            var result = "Creator: The same creator's code has just worked with "
-                + product.Operation();
-
-            return result;
+            case "nokla":
+                Console.WriteLine("You have selected Nokla phone");
+                return new CreateFactoryModelNokla();
+            case "samson":
+                Console.WriteLine("You have selected Samson phone");
+                return new CreateFactoryModelSamson();
+            default:
+                Console.WriteLine("Invalid Input");
+                return null;
         }
     }
 
-    // Concrete Creators override the factory method in order to change the
-    // resulting product's type.
-    class ConcreteCreator1 : Creator
+    static void Main(string[] args)
     {
-        // Note that the signature of the method still uses the abstract product
-        // type, even though the concrete product is actually returned from the
-        // method. This way the Creator can stay independent of concrete product
-        // classes.
-        public override IProduct FactoryMethod()
+        Client getClient = new Client();
+
+        while (true)
         {
-            return new ConcreteProduct1();
-        }
-    }
+            Console.Write("Please provide the model 'Nokla' Or 'Samson' : ");
+            var mobModel = getClient.ClientMethod(Console.ReadLine());
 
-    class ConcreteCreator2 : Creator
-    {
-        public override IProduct FactoryMethod()
-        {
-            return new ConcreteProduct2();
-        }
-    }
+            if (mobModel != null)
+            {
+                Console.WriteLine();
+                Console.Write("To play music press 1 else 2 to stop music : ");
+                char keyDate = Console.ReadKey().KeyChar;
+                Console.WriteLine();
 
-    // The Product interface declares the operations that all concrete products
-    // must implement.
-    public interface IProduct
-    {
-        string Operation();
-    }
+                AbstractPhone phone = mobModel.CreateObject();
 
-    // Concrete Products provide various implementations of the Product
-    // interface.
-    class ConcreteProduct1 : IProduct
-    {
-        public string Operation()
-        {
-            return "{Result of ConcreteProduct1}";
-        }
-    }
+                if (keyDate == '1')
+                    phone.PlayMusic("Sun rahahainatu..");
+                else if (keyDate == '2')
+                    phone.StopMusic();
+                else
+                    Console.WriteLine("Invalid Input");
+                Console.WriteLine("Антоненко Анна");
+                Console.WriteLine($"Дата та час компіляції: {DateTime.Now}");
 
-    class ConcreteProduct2 : IProduct
-    {
-        public string Operation()
-        {
-            return "{Result of ConcreteProduct2}";
-        }
-    }
+            }
 
-    class Client
-    {
-        public void Main()
-        {
-            Console.WriteLine("App: Launched with the ConcreteCreator1.");
-            ClientCode(new ConcreteCreator1());
-            
-            Console.WriteLine("");
-
-            Console.WriteLine("App: Launched with the ConcreteCreator2.");
-            ClientCode(new ConcreteCreator2());
-        }
-
-        // The client code works with an instance of a concrete creator, albeit
-        // through its base interface. As long as the client keeps working with
-        // the creator via the base interface, you can pass it any creator's
-        // subclass.
-        public void ClientCode(Creator creator)
-        {
-            // ...
-            Console.WriteLine("Client: I'm not aware of the creator's class," +
-                "but it still works.\n" + creator.SomeOperation());
-            // ...
-        }
-    }
-
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            new Client().Main();
+            Console.WriteLine();
         }
     }
 }
+
+Абстрактний клас AbstractPhone:
+
+Оголошує два абстрактні методи: PlayMusic(string songName) та StopMusic(), які повинні бути реалізовані у підкласах.
+Конкретні класи телефонів (Samson та Nokla):
+
+Клас Samson та клас Nokla успадковують AbstractPhone і реалізують методи для відтворення та зупинки музики, виводячи відповідні повідомлення в консоль.
+Абстрактна фабрика AbstractPhoneFactory:
+
+Оголошує метод CreateObject(), який має створювати екземпляр конкретного телефону (наприклад, Samson чи Nokla).
+Конкретні фабрики для телефонів (CreateFactoryModelSamson та CreateFactoryModelNokla):
+
+Клас CreateFactoryModelSamson створює об'єкт класу Samson, а клас CreateFactoryModelNokla створює об'єкт класу Nokla.
+Клас Client:
+
+У методі ClientMethod програма запитує користувача про модель телефону (Nokla чи Samson). В залежності від введеного значення вибирається відповідна фабрика для створення об'єкта телефону.
+Потім користувач може вибрати, чи хоче він відтворити музику або зупинити її, натискаючи відповідні клавіші:
+При натисканні клавіші "1" запускається музика, що відображається в консолі.
+При натисканні клавіші "2" музика зупиняється.
+Після кожної операції виводиться дата та час компіляції, а також ім'я користувача (у даному випадку, "Антоненко Анна").
+Основна програма:
+
+Програма працює в циклі, постійно запитуючи користувача про модель телефону та дії з музикою.
