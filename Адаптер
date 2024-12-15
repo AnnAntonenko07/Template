@@ -1,0 +1,156 @@
+using System;
+using System.Collections.Generic;
+
+namespace AdapterPattern
+{
+    public class Money
+    {
+        public decimal Amount { get; }
+
+        public Money(decimal amount)
+        {
+            Amount = amount;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || !(obj is Money))
+                return false;
+            return Amount == ((Money)obj).Amount;
+        }
+
+        public override int GetHashCode()
+        {
+            return Amount.GetHashCode();
+        }
+    }
+
+    public interface IDiscountCalculator
+    {
+        Money Calculate(Money price);
+    }
+
+    public class PremiumDiscountCalculator
+    {
+        private const decimal Discount = 50;
+
+        public decimal Calculate(decimal price)
+        {
+            return price * Discount / 100;
+        }
+    }
+
+    // 1. Адаптер-обгортка
+    public class WrapperAdapter : IDiscountCalculator
+    {
+        private readonly PremiumDiscountCalculator _calculator;
+
+        public WrapperAdapter()
+        {
+            _calculator = new PremiumDiscountCalculator();
+        }
+
+        public Money Calculate(Money price)
+        {
+            var finalPrice = _calculator.Calculate(price.Amount);
+            return new Money(finalPrice);
+        }
+    }
+
+    // 2. Кешуючий адаптер
+    public class CachingAdapter : IDiscountCalculator
+    {
+        private readonly PremiumDiscountCalculator _calculator;
+        private readonly Dictionary<Money, Money> _cache;
+
+        public CachingAdapter()
+        {
+            _calculator = new PremiumDiscountCalculator();
+            _cache = new Dictionary<Money, Money>();
+        }
+
+        public Money Calculate(Money price)
+        {
+            if (_cache.ContainsKey(price))
+            {
+                return _cache[price];
+            }
+
+            var finalPrice = _calculator.Calculate(price.Amount);
+            var result = new Money(finalPrice);
+            _cache[price] = result;
+            return result;
+        }
+    }
+
+    // 3. Адаптер методу
+    public class MethodAdapter
+    {
+        public Money Calculate(Money price, Func<decimal, decimal> calculatePrice)
+        {
+            var finalPrice = calculatePrice(price.Amount);
+            return new Money(finalPrice);
+        }
+    }
+
+    // 4. Успадкований адаптер
+    public class InheritanceAdapter : PremiumDiscountCalculator, IDiscountCalculator
+    {
+        public Money Calculate(Money price)
+        {
+            var finalPrice = base.Calculate(price.Amount);
+            return new Money(finalPrice);
+        }
+    }
+
+    // 5. Вбудований адаптер
+    public class BuiltInAdapter : IDiscountCalculator
+    {
+        private const decimal Discount = 50;
+
+        private decimal CalculateOld(decimal price)
+        {
+            return price * Discount / 100;
+        }
+
+        public Money Calculate(Money price)
+        {
+            var finalPrice = CalculateOld(price.Amount);
+            return new Money(finalPrice);
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            var price = new Money(1000m);
+            Console.WriteLine($"Початкова ціна: {price.Amount}");
+
+            // 1. Адаптер-обгортка
+            var wrapperAdapter = new WrapperAdapter();
+            Console.WriteLine($"Адаптер-обгортка: {wrapperAdapter.Calculate(price).Amount}");
+
+            // 2. Кешуючий адаптер
+            var cachingAdapter = new CachingAdapter();
+            Console.WriteLine($"Кешуючий адаптер: {cachingAdapter.Calculate(price).Amount}");
+
+            // 3. Адаптер методу
+            var methodAdapter = new MethodAdapter();
+            var premiumCalculator = new PremiumDiscountCalculator();
+            Console.WriteLine($"Адаптер методу: {methodAdapter.Calculate(price, premiumCalculator.Calculate).Amount}");
+
+            // 4. Успадкований адаптер
+            var inheritanceAdapter = new InheritanceAdapter();
+            Console.WriteLine($"Успадкований адаптер: {inheritanceAdapter.Calculate(price).Amount}");
+
+            // 5. Вбудований адаптер
+            var builtInAdapter = new BuiltInAdapter();
+            Console.WriteLine($"Вбудований адаптер: {builtInAdapter.Calculate(price).Amount}");
+            Console.WriteLine("Антоненко Анна");
+            Console.WriteLine($"Дата та час компіляції: {DateTime.Now}");
+            Console.ReadLine();
+        }
+ 
+    }
+}
