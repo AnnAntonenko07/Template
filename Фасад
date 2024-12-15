@@ -1,0 +1,254 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+
+// Book class
+public class Book
+{
+    public string Title { get; set; }
+    public string Author { get; set; }
+    private bool isAvailable;
+
+
+    public Book(string title, string author)
+    {
+        Title = title;
+        Author = author;
+        isAvailable = true;
+    }
+
+
+    public bool IsAvailable()
+    {
+        return isAvailable;
+    }
+
+
+    public void SetAvailability(bool available)
+    {
+        isAvailable = available;
+    }
+}
+
+
+// Account class
+public class Account
+{
+    public decimal Balance { get; private set; }
+
+
+    public Account()
+    {
+        Balance = 0;
+    }
+
+
+    public void ChargeLateFee(decimal fee)
+    {
+        Balance += fee;
+    }
+
+
+    public void MakePayment(decimal amount)
+    {
+        Balance -= amount;
+    }
+}
+
+
+// Borrower class
+public class Borrower
+{
+    public string Name { get; set; }
+    public Account Account { get; private set; }
+
+
+    public Borrower(string name)
+    {
+        Name = name;
+        Account = new Account();
+    }
+}
+
+
+// BookLoan class
+public class BookLoan
+{
+    public Book Book { get; private set; }
+    public Borrower Borrower { get; private set; }
+    public DateTime BorrowDate { get; private set; }
+
+
+    public BookLoan(Book book, Borrower borrower)
+    {
+        Book = book;
+        Borrower = borrower;
+        BorrowDate = DateTime.Now;
+        book.SetAvailability(false);
+    }
+
+
+    public void ReturnBook()
+    {
+        Book.SetAvailability(true);
+    }
+}
+
+
+// Catalog class
+public class Catalog
+{
+    private List<Book> books;
+
+
+    public Catalog()
+    {
+        books = new List<Book>();
+    }
+
+
+    public void AddBook(Book book)
+    {
+        books.Add(book);
+    }
+
+
+    public List<Book> SearchBooks(string title, string author)
+    {
+        return books.FindAll(book =>
+            (string.IsNullOrEmpty(title) || book.Title.ToLower().Contains(title.ToLower())) &&
+            (string.IsNullOrEmpty(author) || book.Author.ToLower().Contains(author.ToLower())));
+    }
+}
+
+
+// LibraryFacade class
+public class LibraryFacade
+{
+    private Catalog catalog;
+    private List<BookLoan> bookLoans;
+    private List<Borrower> borrowers;
+
+
+    public LibraryFacade()
+    {
+        catalog = new Catalog();
+        bookLoans = new List<BookLoan>();
+        borrowers = new List<Borrower>();
+    }
+
+
+    public void AddBook(string title, string author)
+    {
+        catalog.AddBook(new Book(title, author));
+    }
+
+
+    public List<Book> SearchBooks(string title, string author)
+    {
+        return catalog.SearchBooks(title, author);
+    }
+
+
+    public bool BorrowBook(Book book, Borrower borrower)
+    {
+        if (book.IsAvailable())
+        {
+            bookLoans.Add(new BookLoan(book, borrower));
+            return true;
+        }
+        return false;
+    }
+
+
+    public bool ReturnBook(Book book)
+    {
+        var loan = bookLoans.Find(l => l.Book == book);
+        if (loan != null)
+        {
+            loan.ReturnBook();
+            bookLoans.Remove(loan);
+            return true;
+        }
+        return false;
+    }
+
+
+    public void AddBorrower(Borrower borrower)
+    {
+        borrowers.Add(borrower);
+    }
+
+
+    public void RemoveBorrower(Borrower borrower)
+    {
+        borrowers.Remove(borrower);
+    }
+
+
+    public decimal GetBalance(Borrower borrower)
+    {
+        return borrower.Account.Balance;
+    }
+
+
+    public void ChargeLateFee(Borrower borrower, decimal lateFee)
+    {
+        borrower.Account.ChargeLateFee(lateFee);
+    }
+}
+
+
+// Program class with Main method
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create the library facade
+        LibraryFacade library = new LibraryFacade();
+
+
+        // Add some books to the library
+        library.AddBook("The Catcher in the Rye", "J.D. Salinger");
+        library.AddBook("To Kill a Mockingbird", "Harper Lee");
+        library.AddBook("1984", "George Orwell");
+
+
+        // Add a borrower
+        Borrower john = new Borrower("John Smith");
+        library.AddBorrower(john);
+
+
+        // Search for a book
+        List<Book> books = library.SearchBooks("Catcher", "");
+
+
+        // Try to borrow a book
+        if (books.Count > 0)
+        {
+            Book book = books[0];
+            if (library.BorrowBook(book, john))
+            {
+                Console.WriteLine($"{john.Name} successfully borrowed {book.Title}");
+
+
+                // Return the book
+                if (library.ReturnBook(book))
+                {
+                    Console.WriteLine($"{john.Name} successfully returned {book.Title}");
+                }
+            }
+        }
+
+
+        // Charge a late fee
+        library.ChargeLateFee(john, 5.00m);
+        Console.WriteLine($"{john.Name}'s balance: ${library.GetBalance(john)}");
+        Console.WriteLine("Антоненко Анна");
+        Console.WriteLine($"Дата та час компіляції: {DateTime.Now}");
+        Console.ReadLine();
+
+
+    }
+}
